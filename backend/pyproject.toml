@@ -1,5 +1,5 @@
 [project]
-name = "backend"
+name = "golem-backend"
 version = "0.1.0"
 description = "GOLEM backend"
 readme = "README.md"
