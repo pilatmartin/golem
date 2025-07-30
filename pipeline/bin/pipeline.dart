@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:csv/csv.dart';
 import 'package:pipeline/fasta.dart';
 import 'package:pipeline/fasta_generator.dart';
@@ -16,6 +18,7 @@ void main(List<String> arguments) async {
   final organismFolderName = arguments[0];
   final organism = OrganismFactory.getOrganism(organismFolderName);
   final useTss = arguments.contains('--with-tss');
+  final noComments = arguments.contains('--no-comments');
 
   // Find files
   print('Searching input data for `${organism.name}`. TSS: $useTss');
@@ -112,6 +115,7 @@ void main(List<String> arguments) async {
 
   // Save the output fasta file
   final fastaOutputFile = File('$outputPath/$organismFolderName${useTss ? '-with-tss' : ''}.fasta');
+  final metadataOutputFile = File('$outputPath/$organismFolderName${useTss ? '-with-tss' : ''}.metadata.json');
   final fastaSink = fastaOutputFile.openWrite(mode: FileMode.writeOnly);
   final generator = FastaGenerator(
     gff,
@@ -121,16 +125,60 @@ void main(List<String> arguments) async {
     useSelfInsteadOfStartCodon: organism.useSelfInsteadOfStartCodon,
     useAtg: organism.useAtg,
   );
+  
+  final metadataResult = <String, dynamic>{};
+
   await for (final gene in generator.toFasta(organism.deltaBases)) {
-    fastaSink.writeln(gene.join("\n"));
+    if (noComments) {
+      fastaSink.writeln(gene.where((line) => !line.startsWith(';')).join('\n'));
+      metadataResult.addAll(toJson(gene));
+    } else {
+      fastaSink.writeln(gene.join("\n"));
+    }
   }
+
+  if (noComments) {
+    final encoder = JsonEncoder.withIndent('  ');
+    final jsonString = encoder.convert(metadataResult);
+
+    await metadataOutputFile.writeAsString(jsonString);
+    print('Wrote json to `${metadataOutputFile.path}`');
+  }
+
   await fastaSink.flush();
   await fastaSink.close();
+  
   print('Wrote fasta to `${fastaOutputFile.path}`');
   await fasta.cleanup();
   print('Cleaned up temporary files');
 
   exit(0);
+}
+
+Map<String, dynamic> toJson(List<String> metadataLines) {
+  final source = getMetadataLine(metadataLines, ';SOURCE');
+  final description = getMetadataLine(metadataLines, ';DESCRIPTION');
+  final markers = getMetadataLine(metadataLines, ';MARKERS');
+  final transcriptionRates =
+      getMetadataLine(metadataLines, ';TRANSCRIPTION_RATES');
+  final transcriptId = RegExp(r'^>([^\s]*)').firstMatch(metadataLines[0])!.group(1);
+
+  return {
+    transcriptId!: {
+      'source': source,
+      'description': description,
+      'markers': markers != null ? jsonDecode(markers) : null,
+      'transcriptionRates':
+          transcriptionRates != null ? jsonDecode(transcriptionRates) : null,
+    }
+  };
+}
+
+String? getMetadataLine(List<String> metadataLines, String lineKey) {
+  return metadataLines
+      .firstWhereOrNull((line) => line.startsWith(lineKey))
+      ?.split(' ')
+      .firstOrNull;
 }
 
 /// Holds the paths to the source files
