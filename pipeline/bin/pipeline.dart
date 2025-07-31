@@ -178,7 +178,7 @@ String? getMetadataLine(List<String> metadataLines, String lineKey) {
   return metadataLines
       .firstWhereOrNull((line) => line.startsWith(lineKey))
       ?.split(' ')
-      .firstOrNull;
+      .lastOrNull;
 }
 
 /// Holds the paths to the source files
