@@ -1,8 +1,10 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:golem_ui/genes/stage_selection.dart';
 import 'package:golem_ui/genes/gene_list.dart';
 import 'package:golem_ui/genes/gene_model.dart';
+import 'package:golem_ui/utilities/text.dart';
 import 'package:provider/provider.dart';
 import 'package:truncate/truncate.dart';
 
@@ -91,6 +93,7 @@ class _StagePanelState extends State<StagePanel> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final allStagesKeys = context.select<GeneModel, List<String>>((model) => model.sourceGenes?.stageKeys ?? []);
+    final groupedStagesKeys = groupBy(allStagesKeys, (str) => str.split(' ').first);
     final allowFilter = context.select<GeneModel, bool>((model) => model.sourceGenes?.stages == null);
     final stageColors = context.select<GeneModel, Map<String, Color>>((model) => model.sourceGenes?.colors ?? {});
     final sourceGenes = context.select<GeneModel, GeneList?>((model) => model.sourceGenes);
@@ -120,13 +123,15 @@ class _StagePanelState extends State<StagePanel> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final key in allStagesKeys)
-                  _StageCard(
-                    name: key,
-                    color: stageColors[key],
-                    isSelected: _selectedStages.contains(key) == true,
-                    onToggle: (value) => _handleToggle(key, value),
-                  ),
+                for (final group in groupedStagesKeys.entries)
+                  _StageCardList(groupName: group.key, children: [
+                    for (final name in group.value)
+                      _StageCard(
+                          name: name,
+                          color: stageColors[name],
+                          isSelected: _selectedStages.contains(name),
+                          onToggle: (value) => _handleToggle(name, value))
+                  ]),
               ],
             ),
             if (allowFilter) ...[
@@ -261,7 +266,7 @@ class _StageCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  truncate(name.replaceAll('_', ' '), 60),
+                  normalizeStageName(name),
                   overflow: TextOverflow.fade,
                   style: textTheme.titleSmall?.copyWith(color: textColor),
                   maxLines: 3,
@@ -272,6 +277,42 @@ class _StageCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _StageCardList extends StatelessWidget {
+  final String groupName;
+  final List<_StageCard> children;
+
+  const _StageCardList({
+    required this.groupName,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Text(
+            normalizeStageName(groupName),
+            style: textTheme.titleSmall,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            children: children,
+          ),
+        ),
+      ],
     );
   }
 }
