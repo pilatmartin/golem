@@ -1,0 +1,29 @@
+@startuml database_schema
+
+skinparam Linetype ortho
+skinparam Nodesep 80
+skinparam Ranksep 50
+skinparam backgroundColor transparent
+
+hide circle
+
+entity users {
+    *id: uuid
+    *username: varchar
+    *password_hash: varchar
+}
+
+entity groups {
+    *id: uuid
+    *name: varchar
+}
+
+entity user_groups {
+    *user_id: <<FK users>>
+    *group_id: <<FK groups>>
+}
+
+users  |o.. user_groups
+groups |o.. user_groups
+
+@enduml
