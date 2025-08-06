@@ -3,9 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.routes.auth import auth_router
 from app.api.v1.routes.test import test_router
 
-import app.config # noqa: F401 Loads env variables to a config object
 V1_PREFIX = "/v1"
 
 
@@ -24,6 +24,7 @@ def create_app():
     )
 
     app.include_router(router=test_router, prefix=V1_PREFIX)
+    app.include_router(router=auth_router, prefix=V1_PREFIX)
 
     return app
 
