@@ -13,7 +13,6 @@ from app.config import app_config
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # handles JWT token authentication
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/auth/login")
 jwt_scheme = HTTPBearer(auto_error=False)
 
 
