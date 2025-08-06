@@ -6,8 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.routes.auth import auth_router
 from app.api.v1.routes.test import test_router
 
-import app.config # noqa: F401 Loads env variables to a config object
-
 V1_PREFIX = "/v1"
 
 
