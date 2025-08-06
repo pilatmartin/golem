@@ -39,7 +39,7 @@ $ cp .env.template .env
 Now we can run the database migrations:
 
 ```bash
-$ uv run alembic upgrade head
+$ uv run alembic -c db/alembic.ini upgrade head
 ```
 
 Finally, we can run the backend using:

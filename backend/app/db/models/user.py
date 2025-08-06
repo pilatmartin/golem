@@ -13,5 +13,6 @@ class User(SQLModel, table=True):
     id: uuid.UUID = Field(default=uuid.uuid4(), primary_key=True)
     username: str
     hashed_password: str
-    
-    groups: list[Group] = Relationship(back_populates="users", link_model=UserGroup)
+
+    groups: list[Group] = Relationship(back_populates="users", link_model=UserGroup,
+                                       sa_relationship_kwargs={"lazy": "selectin"})
