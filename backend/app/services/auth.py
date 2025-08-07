@@ -127,3 +127,19 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(jwt_sch
         raise credentials_exception
 
     return user
+
+
+async def get_current_user_optional(token: HTTPAuthorizationCredentials = Depends(jwt_scheme),
+                                    user_repository: UserRepository = Depends(UserRepository)) -> User | None:
+    """
+    Get the current user based on the token without throwing an exception.
+
+    Returns:
+        User | None: The current user if logged in, None otherwise.
+    """
+
+    try:
+        current_user = await get_current_user(token=token, user_repository=user_repository)
+        return current_user
+    except HTTPException:
+        return None

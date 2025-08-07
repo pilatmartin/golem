@@ -9,21 +9,43 @@ hide circle
 
 entity users {
     *id: uuid
+    ---
     *username: varchar
     *password_hash: varchar
 }
 
 entity groups {
     *id: uuid
+    ---
     *name: varchar
 }
 
-entity user_groups {
+entity users_groups {
     *user_id: <<FK users>>
     *group_id: <<FK groups>>
 }
 
-users  |o.. user_groups
-groups |o.. user_groups
+entity organisms {
+    *id: uuid
+    ---
+    *name: varchar
+    *filename: varchar
+    *public: bool
+}
+
+entity organisms_groups {
+    *organism_id: uuid
+    *group_id: uuid
+}
+
+entity alembic_version {
+    *version_num: varchar
+}
+
+users  |o.. users_groups
+groups |o.. users_groups
+
+groups |o.. organisms_groups
+organisms |o.. organisms_groups
 
 @enduml
