@@ -334,6 +334,7 @@ dependencies = [
     { name = "python-multipart" },
     { name = "ruff" },
     { name = "sqlmodel" },
+    { name = "starlette-admin" },
 ]
 
 [package.metadata]
@@ -353,6 +354,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "ruff", specifier = ">=0.12.5" },
     { name = "sqlmodel", specifier = ">=0.0.24" },
+    { name = "starlette-admin", specifier = ">=0.15.1" },
 ]
 
 [[package]]
@@ -930,6 +932,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/04/57/d062573f391d062710d4088fa1369428c38d51460ab6fedff920efef932e/starlette-0.47.2.tar.gz", hash = "sha256:6ae9aa5db235e4846decc1e7b79c4f346adf41e9777aebeb49dfd09bbd7023d8", size = 2583948, upload-time = "2025-07-20T17:31:58.522Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/1f/b876b1f83aef204198a42dc101613fefccb32258e5428b5f9259677864b4/starlette-0.47.2-py3-none-any.whl", hash = "sha256:c5847e96134e5c5371ee9fac6fdf1a67336d5815e09eb2a01fdb57a351ef915b", size = 72984, upload-time = "2025-07-20T17:31:56.738Z" },
+]
+
+[[package]]
+name = "starlette-admin"
+version = "0.15.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "python-multipart" },
+    { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/51/84/bb719df244cb8b720a81bd88aff18ababceb1f3e9afaf44563ba61b2d1b4/starlette_admin-0.15.1.tar.gz", hash = "sha256:beccdb8695ecadc9f314e0b5afd2b04e067538e8273d0c3199b671198b5ee43e", size = 2098915, upload-time = "2025-05-26T15:37:56.278Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/41/8f0e354441aae2fc843e7fafb7e64fbfef541f3ac2d238c7b05b1136ffd0/starlette_admin-0.15.1-py3-none-any.whl", hash = "sha256:a832e8a0e8a16c9c3f2012ddf352867ad8e730f21192caa85225798091cba130", size = 2169980, upload-time = "2025-05-26T15:37:53.251Z" },
 ]
 
 [[package]]

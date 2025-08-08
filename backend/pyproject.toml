@@ -20,4 +20,5 @@ dependencies = [
     "python-multipart>=0.0.20",
     "ruff>=0.12.5",
     "sqlmodel>=0.0.24",
+    "starlette-admin>=0.15.1",
 ]
