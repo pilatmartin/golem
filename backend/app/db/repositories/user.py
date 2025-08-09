@@ -42,6 +42,10 @@ class UserRepository:
             User: The created user.
         """
 
+        user_exists = await self.get(user.username)
+        if user_exists is not None:
+            return user_exists
+
         self.session.add(user)
         await self.session.commit()
         await self.session.refresh(user)

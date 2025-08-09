@@ -21,3 +21,9 @@ class UserResponse(BaseSchema):
     id: uuid.UUID
     username: str
     groups: list[GroupResponse]
+
+class LoginRequest(BaseSchema):
+    """Request schema for login endpoint."""
+
+    username: str
+    password: str

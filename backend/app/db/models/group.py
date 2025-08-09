@@ -26,7 +26,7 @@ class Group(SQLModel, table=True):
 
     __tablename__ = "groups"
 
-    id: uuid.UUID = Field(default=uuid.uuid4(), primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
 
     users: list["User"] = Relationship(back_populates="groups", link_model=UserGroup)

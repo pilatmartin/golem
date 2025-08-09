@@ -10,7 +10,7 @@ class Organism(SQLModel, table=True):
 
     __tablename__ = "organisms"
 
-    id: uuid.UUID = Field(default=uuid.uuid4(), primary_key=True)
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
     filename: str
     public: bool

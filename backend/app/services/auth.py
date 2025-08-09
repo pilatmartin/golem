@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordRequestForm, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 
+from app.api.v1.oauth2_cookie_scheme import OAuth2PasswordBearerWithCookie
+from app.db import db
 from app.db.models.user import User
 from app.db.repositories.user import UserRepository
 from app.config import app_config
@@ -12,8 +14,10 @@ from app.config import app_config
 # handles password hashing (using bcrypt, TODO: consider argon2)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# handles JWT token authentication
-jwt_scheme = HTTPBearer(auto_error=False)
+# handles JWT token authentication via cookie
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl="/v1/auth/login", auto_error=False)
+
+ADMINISTRATORS_GROUP = "administrators"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -92,7 +96,8 @@ async def authenticate_user(form_data: OAuth2PasswordRequestForm = Depends(),
     return user
 
 
-async def get_current_user(token: HTTPAuthorizationCredentials = Depends(jwt_scheme),
+# TODO: move some logic to the user_loader middleware
+async def get_current_user(request: Request, token: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
                            user_repository: UserRepository = Depends(UserRepository)) -> User:
     """
     Get the current user based on the token.
@@ -104,6 +109,9 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(jwt_sch
         User: The current user.
     """
 
+    if hasattr(request.state, "user") and request.state.user is not None:
+        return request.state.user
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid authentication credentials",
@@ -114,13 +122,14 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(jwt_sch
         raise credentials_exception
 
     try:
-        payload: dict = jwt.decode(token.credentials, app_config.secret_key, algorithms=[app_config.algorithm])
+        payload: dict = decode_token(token.credentials)
         username: str | None = payload.get("sub")
 
         if username is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
+    # TODO: handle other jwt exceptions
 
     user = await user_repository.get(username=username)
     if user is None:
@@ -129,7 +138,7 @@ async def get_current_user(token: HTTPAuthorizationCredentials = Depends(jwt_sch
     return user
 
 
-async def get_current_user_optional(token: HTTPAuthorizationCredentials = Depends(jwt_scheme),
+async def get_current_user_optional(request: Request, token: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
                                     user_repository: UserRepository = Depends(UserRepository)) -> User | None:
     """
     Get the current user based on the token without throwing an exception.
@@ -139,7 +148,73 @@ async def get_current_user_optional(token: HTTPAuthorizationCredentials = Depend
     """
 
     try:
-        current_user = await get_current_user(token=token, user_repository=user_repository)
+        current_user = await get_current_user(request, token, user_repository)
         return current_user
     except HTTPException:
         return None
+
+
+async def get_current_admin_user(request: Request, token: HTTPAuthorizationCredentials = Depends(oauth2_scheme),
+                                 user_repository: UserRepository = Depends(UserRepository)) -> User | None:
+    """
+    Get the current admin user based on the token.
+
+    Throws:
+        HTTPException: If the user is not an admin.
+
+    Returns:
+        User: The current admin user.
+    """
+
+    current_user = await get_current_user(request, token, user_repository)
+    if is_admin(current_user):
+        return current_user
+    else:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+
+async def get_user_from_token(token: str) -> User | None:
+    try:
+        payload: dict = decode_token(token)
+        username: str | None = payload.get("sub")
+
+        if username is None:
+            return None
+    except JWTError:
+        return None
+
+    async for session in db.get_session():
+        user_repository = UserRepository(session=session)
+        return await user_repository.get(username=username)
+    return None
+
+
+def is_admin(user: User) -> bool:
+    """
+    Check if a user is an admin. User is considered an admin if they have the ADMINISTRATORS_GROUP group.
+
+    Args:
+        user (User): The user to check.
+
+    Returns:
+        bool: True if the user is an admin, False otherwise.
+    """
+    return user is not None and any(group.name == ADMINISTRATORS_GROUP for group in user.groups)
+
+
+def decode_token(token: str) -> dict:
+    """
+    Decode a JWT token and return the payload as a dictionary.
+
+    Args:
+        token (str): The JWT token to decode.
+
+    Throws:
+        JWTError – If the signature is invalid in any way.
+        ExpiredSignatureError – If the signature has expired.
+        JWTClaimsError – If any claim is invalid in any way
+
+    Returns:
+        dict: The decoded token.
+    """
+    return jwt.decode(token, app_config.secret_key, algorithms=[app_config.algorithm])
