@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, status, HTTPException
 from starlette.responses import JSONResponse
 
-from app.api.v1.schemas.auth import LoginResponse, UserResponse
+from app.api.v1.schemas.auth import LoginResponse, UserResponse, LoginRequest
 from app.api.v1.schemas.response import ResponseSingle
 from app.config import app_config
 from app.db.models.user import User
@@ -48,12 +48,12 @@ async def login(user: User = Depends(authenticate_user)) -> JSONResponse:
 
 
 @auth_router.post("/register")
-async def register(username: str, password: str, user_repository: UserRepository = Depends(UserRepository)):
-    if await user_repository.get(username=username):
+async def register(login_data: LoginRequest, user_repository: UserRepository = Depends(UserRepository)):
+    if await user_repository.get(username=login_data.username):
         raise HTTPException(status_code=400, detail="User already exists")
 
-    hashed_password = get_password_hash(password)
-    user = await user_repository.create(User(username=username, hashed_password=hashed_password))
+    hashed_password = get_password_hash(login_data.password)
+    user = await user_repository.create(User(username=login_data.username, hashed_password=hashed_password))
     user_response = UserResponse.model_validate(user)
 
     return ResponseSingle(data=user_response)
