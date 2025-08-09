@@ -15,3 +15,18 @@ async def get_session() -> AsyncGenerator[AsyncSession]:
     )
     async with async_session() as session:
         yield session
+
+
+async def add_default_admin() -> None:
+    from app.db.models.user import User
+    from app.db.repositories.user import UserRepository
+    from app.services.auth import get_password_hash
+
+    async for session in get_session():
+        user_repository = UserRepository(session=session)
+        await user_repository.create(
+            User(
+                username=app_config.default_admin_username,
+                hashed_password=get_password_hash(app_config.default_admin_password),
+            )
+        )

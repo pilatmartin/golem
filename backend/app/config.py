@@ -13,6 +13,8 @@ class AppConfig:
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int
+    default_admin_username: str = "admin"
+    default_admin_password: str = "admin"
 
     def __post_init__(self):
         missing = [name.upper() for name, value in self.__dict__.items() if value in (None, "")]
@@ -38,6 +40,8 @@ class AppConfig:
             secret_key=os.environ.get("SECRET_KEY"),
             algorithm=os.environ.get("ALGORITHM"),
             access_token_expire_minutes=int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES")),
+            default_admin_username=os.environ.get("DEFAULT_ADMIN_USERNAME"),
+            default_admin_password=os.environ.get("DEFAULT_ADMIN_PASSWORD"),
         )
 
 
