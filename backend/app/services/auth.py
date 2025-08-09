@@ -110,7 +110,6 @@ async def get_current_user(request: Request, token: HTTPAuthorizationCredentials
     """
 
     if hasattr(request.state, "user") and request.state.user is not None:
-        print("using cached user")
         return request.state.user
 
     credentials_exception = HTTPException(
